@@ -5,3 +5,5 @@ fexpect
 django
 beautifulsoup4
 mechanize
+south
+django-json-field
