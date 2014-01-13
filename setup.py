@@ -53,7 +53,7 @@ from setuptools import setup
 
 # - Meta Info
 
-from makanai import get_version
+from pecker import get_version
 
 SCRIPTS=glob.glob('scripts/*')
 try:
