@@ -1,0 +1,7 @@
+fabric
+cuisine
+fabtools
+fexpect
+django
+beautifulsoup4
+mechanize
