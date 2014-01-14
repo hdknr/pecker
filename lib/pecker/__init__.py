@@ -4,5 +4,3 @@ __build__ = ''
 
 def get_version():
     return '.'.join( map( lambda v:str(v),__version__) )
-
-from crawler import Crawler
