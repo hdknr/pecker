@@ -11,6 +11,7 @@ from hashlib import md5
 class Site(models.Model):
     name= models.CharField( max_length=20,unique=True )
     host =  models.CharField( max_length=15, null=True,blank=True,)
+    scheme =  models.CharField( max_length=5, default='https' )
     start_url = models.CharField( max_length=300,null=True,blank=True, )
 
     class Meta:
@@ -28,10 +29,14 @@ class Run(models.Model):
         verbose_name = _(u'Run') 
         verbose_name_plural = _(u'Runs') 
 
+    def __unicode__(self):
+        return self.name
+
 class Link(models.Model):
     site = models.ForeignKey(Site)
     url_hash = models.CharField( max_length=50,db_index=True,unique=True,blank=True )
     url = models.CharField( max_length=300,)
+    available  = models.BooleanField( default=True ) 
 
     class Meta:
         verbose_name = _(u'Link') 
@@ -48,12 +53,15 @@ class Case(models.Model):
     link = models.ForeignKey(Link)
     form_index = models.IntegerField()  
     ''' Form Index :  -1 : GET with query_params, >=0 : POST with form_params(&query_params) '''
-    form_params = JSONField()
-    query_params = JSONField()
+    form_params = JSONField(null=True,blank=True,)
+    query_params = JSONField(null=True,blank=True,)
 
     class Meta:
         verbose_name = _(u'Case') 
         verbose_name_plural = _(u'Cases') 
+
+    def __unicode__(self):
+        return  self.link and self.link.__unicode__() or 'unspecified'
    
 
 class LinkResult(models.Model):
@@ -61,7 +69,9 @@ class LinkResult(models.Model):
     link = models.ForeignKey(Link) 
     case =  models.ForeignKey(Case,null=True,default=None,blank=True,) 
     status =  models.CharField( max_length=3,null=True,blank=True, )
+    content_type =  models.CharField( max_length=20,null=True,blank=True, )
     output = models.TextField( null=True,blank=True ) 
+    created_at = models.DateTimeField(_(u'Created Time'),auto_now_add=True)
 
     class Meta:
         verbose_name = _(u'LinkResult') 
