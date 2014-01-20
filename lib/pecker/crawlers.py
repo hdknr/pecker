@@ -5,6 +5,7 @@ from urlparse import urlparse
 
 import traceback
 import time
+import os
 
 class Crawler(object):
 
@@ -33,34 +34,19 @@ class Crawler(object):
                 return []
 
         #: get page
-        print "@@@@@", 
         res=self.br.open(url,timeout=2.0) 
-        print url,
         result.status = res.code  
         result.content_type = res.info()['Content-Type']
-        print result.content_type,
         if not result.content_type or result.content_type.find('text/') <0:
             #: PDF ... 
             result.save()
             return []
 
-#        result.output = res.get_data()
+        result.output = res.get_data().decode('shift_jis')
         result.save()
 
         #: page links
-        next_links=[]
-        for ln in self.br.links():
-            path=ln.url
-            u = urlparse( path )
-            if any([u.path =='',
-                u.scheme=='javascript']):
-                continue
-            elif u.netloc == '':
-                path = "%s://%s%s" % ( self.site.scheme,    
-                            self.site.host, path )
-            elif u.netloc != self.site.host:
-                continue
-            next_links.append( path )
+        next_links=result.children()
 
         #: page has cases
         for c in link.case_set.all():
@@ -78,7 +64,7 @@ class Crawler(object):
                     res = self.br.submit()
                     case_result.status = res.code
                     case_result.content_type=res.info()['Content-Type']
-#                    case_result.output = res.get_data()
+                    case_result.output = res.get_data().decode('shift_jis')
                     case_result.save()
 
             self.br.open(url,timeout=2.0,)           #: access original page
@@ -92,7 +78,9 @@ class Crawler(object):
             url = url or self.site.start_url
             next_links = self.crawl( url ,force=force)
         except:
-            print "@@@",url,traceback.format_exc()
+            print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+            print "@@@@ errror",url
+            print traceback.format_exc()
             return
 
         if not follow:

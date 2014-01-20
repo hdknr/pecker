@@ -8,6 +8,10 @@ from json_field import JSONField
 from datetime import timedelta
 from hashlib import md5
 
+from bs4 import BeautifulSoup as Soup
+from urlparse import urlparse,urljoin
+import os
+
 class Site(models.Model):
     name= models.CharField( max_length=20,unique=True )
     host =  models.CharField( max_length=15, null=True,blank=True,)
@@ -20,6 +24,9 @@ class Site(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def delete_all_links(self):
+        self.link_set.all().delete()
 
 class Run(models.Model):
     site = models.ForeignKey(Site)
@@ -76,3 +83,32 @@ class LinkResult(models.Model):
     class Meta:
         verbose_name = _(u'LinkResult') 
         verbose_name_plural = _(u'LinkResults') 
+
+    def soup(self):
+        return Soup(self.output) 
+
+    def children(self): 
+        _links = [ ln['href'] for ln in  Soup(self.output).select('a') 
+                if ln.has_attr('href') and not ln['href'].startswith('#') and not ln['href']=='' ]
+
+        result_links =[]
+        for link in _links:
+            current = urlparse( link )    
+            parent = urlparse( self.link.url)
+            fragment =  '' if current.fragment =='' else '#'+current.fragment
+
+            if current.netloc !='' :
+                if current.netloc != self.link.site.host:
+                    continue
+
+            link = urljoin( parent.path, current.path).replace('../','')
+    
+            if fragment:
+                link = current.path.replace(fragment,'')
+            
+            if link != '' and link[0] != '/':             
+                link = '/' + link
+
+            result_links.append( "%s://%s%s" % ( parent.scheme, parent.netloc,link) )
+
+        return result_links
