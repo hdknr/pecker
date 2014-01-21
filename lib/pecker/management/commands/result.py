@@ -8,7 +8,7 @@ import os
 from django.conf import settings
 
 from . import GenericCommand
-from ...models import Site,Link,LinkResult
+from ...models import Site,Link,LinkResult,Run
 from ...crawlers import Crawler
 
 class Command(GenericCommand):
@@ -33,26 +33,10 @@ class Command(GenericCommand):
         for link in result.children():
             print link
 
-#        if True:
-#            return 
-#
-#        for link in result:
-#            current = urlparse( link )            
-#            parent = urlparse(result.link.url)
-#            fragment =  '' if current.fragment =='' else '#'+current.fragment
-#             
-#            if current.netloc !='' :
-#                if current.netloc != result.link.site.host:
-#                    continue
-#            elif current.path.startswith('..'):
-#                link = os.path.dirname(
-#                    os.path.dirname( result.link.url )) + '/'+link[2:]
-#            elif current.path.startswith('/'):
-#                link = "%s://%s%s" % ( parent.scheme, parent.netloc, current.path ) 
-#            else:
-#                link = os.path.dirname( result.link.url )+ '/' +link[:]
-#
-#            if fragment:
-#                link = link.replace(fragment,'')
-#
-#            print current.path, link
+    def handle_list_forms(self,run,*args,**options):
+        run = Run.objects.get(name=run) 
+        print "Results",run.linkresult_set.exclude(output = None).count()
+        for result in run.linkresult_set.exclude(output = None):
+            forms = result.soup().select('form')
+            if len(forms) > 0:
+                print result.link.url, len(forms)
