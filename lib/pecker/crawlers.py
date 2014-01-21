@@ -20,24 +20,17 @@ class Crawler(object):
         self.br = M.Browser()
         self.br.set_handle_robots(False)
 
-    def crawl(self,url,force=False):
-        link,link_created = Link.objects.get_or_create(
-                            site = self.site,
-                            url  = url )
-        
-        result,result_created = LinkResult.objects.get_or_create(
-                                    run = self.run,
-                                    link = link,
-                                    case = None 
-                                )      
-        if link.available == False or result.status != None:
+    def crawl(self,result ,force=False):
+
+        if result.link.available == False or result.status != None:
             if not force:
                 return []
 
         #: get page
-        res=self.br.open(url,timeout=2.0) 
+        res=self.br.open(result.link.url,timeout=2.0) 
         result.status = res.code  
         result.content_type = res.info()['Content-Type']
+
         if not result.content_type or result.content_type.find('text/') <0:
             #: PDF ... 
             result.save()
@@ -51,10 +44,10 @@ class Crawler(object):
         next_links=result.children()
 
         #: page has cases
-        for c in link.case_set.all():
+        for c in result.link.case_set.all():
             case_result, case_result_created= LinkResult.objects.get_or_create(
                                                 run=self.run,
-                                                link=link,
+                                                link=result.link,
                                                 case = c
                                             )
             #: TOOD: this implementation expect only 1 depth
@@ -66,23 +59,24 @@ class Crawler(object):
                     res = self.br.submit()
                     case_result.status = res.code
                     case_result.content_type=res.info()['Content-Type']
-                    case_result.set_output(res.get_data() )
+                    if result.content_type or result.content_type.find('text/') >=0:
+                        case_result.set_output(res.get_data() )
                     case_result.save()
 
-            self.br.open(url,timeout=2.0,)           #: access original page
+            self.br.open(result.link.url,timeout=2.0,)           #: access original page
 
         return next_links
 
     def start(self,url=None,follow=True ,force=False):
         self.br.clear_history()
         time.sleep(0.01 )        
+        url = url or self.site.start_url
+        result = self.run.provide_result( url )      
         try:
-            url = url or self.site.start_url
-            next_links = self.crawl( url ,force=force)
+            next_links = self.crawl( result,force=force)
         except:
-            print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-            print "@@@@ errror",url
-            print traceback.format_exc()
+            result.errors = traceback.format_exc()
+            result.save()
             return
 
         if not follow:

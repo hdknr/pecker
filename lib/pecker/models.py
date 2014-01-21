@@ -15,7 +15,7 @@ import os
 
 class Site(models.Model):
     name= models.CharField( max_length=20,unique=True )
-    host =  models.CharField( max_length=15, null=True,blank=True,)
+    host =  models.CharField( max_length=30, null=True,blank=True,)
     scheme =  models.CharField( max_length=5, default='https' )
     start_url = models.CharField( max_length=300,null=True,blank=True, )
 
@@ -39,6 +39,19 @@ class Run(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def provide_result(self,url):
+        link,link_created = Link.objects.get_or_create(
+                            site = self.site,
+                            url  = url )
+
+        result,result_created = LinkResult.objects.get_or_create(
+                                    run = self,
+                                    link = link,
+                                    case = None
+                                )
+        return result
+ 
 
 class Link(models.Model):
     site = models.ForeignKey(Site)
@@ -78,7 +91,8 @@ class LinkResult(models.Model):
     case =  models.ForeignKey(Case,null=True,default=None,blank=True,) 
     status =  models.CharField( max_length=3,null=True,blank=True, )
     content_type =  models.CharField( max_length=20,null=True,blank=True, )
-    output = models.TextField( null=True,blank=True ) 
+    output = models.TextField( null=True,blank=True,default=None ) 
+    errors =  models.TextField( null=True,blank=True,default=None ) 
     created_at = models.DateTimeField(_(u'Created Time'),auto_now_add=True)
 
     class Meta:
@@ -103,6 +117,7 @@ class LinkResult(models.Model):
             current = urlparse( link )    
             parent = urlparse( self.link.url)
             fragment =  '' if current.fragment =='' else '#'+current.fragment
+            query = '' if current.query == '' else '?' + current.query
 
             if current.netloc !='' :
                 if current.netloc != self.link.site.host:
@@ -116,6 +131,6 @@ class LinkResult(models.Model):
             if link != '' and link[0] != '/':             
                 link = '/' + link
 
-            result_links.append( "%s://%s%s" % ( parent.scheme, parent.netloc,link) )
+            result_links.append( "%s://%s%s%s" % ( parent.scheme, parent.netloc,link,query) )
 
         return result_links

@@ -33,6 +33,16 @@ class Command(GenericCommand):
         for link in result.children():
             print link
 
+    def handle_list_anchors(self,result_id,run,*args,**options):
+        ''' reuslt list_anchors 1 '''
+        if not id:
+            print 'python manage.py result list_anchors {{ LinkResult.id }} '
+            return 
+
+        result = LinkResult.objects.get(id=result_id)
+        for link in result.soup().select('a'):
+            print link.get('href','')
+
     def handle_list_forms(self,run,*args,**options):
         run = Run.objects.get(name=run) 
         print "Results",run.linkresult_set.exclude(output = None).count()
