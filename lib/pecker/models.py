@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from json_field import JSONField
 from datetime import timedelta
 from hashlib import md5
+from requests.packages import chardet
 
 from bs4 import BeautifulSoup as Soup
 from urlparse import urlparse,urljoin
@@ -83,6 +84,12 @@ class LinkResult(models.Model):
     class Meta:
         verbose_name = _(u'LinkResult') 
         verbose_name_plural = _(u'LinkResults') 
+
+    def set_output(self,text,charset=None):
+        #: TODO: MUST do nothing on unicode python 2.7
+        if not charset: 
+            charset = chardet.detect(text)['encoding']
+        self.output = text.decode(charset)
 
     def soup(self):
         return Soup(self.output) 

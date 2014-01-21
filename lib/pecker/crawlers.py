@@ -2,6 +2,7 @@ import mechanize as M
 from models import Site,Run,Link,LinkResult,Case
 from django.utils.timezone import now,localtime
 from urlparse import urlparse
+from requests.packages import chardet
 
 import traceback
 import time
@@ -42,7 +43,8 @@ class Crawler(object):
             result.save()
             return []
 
-        result.output = res.get_data().decode('shift_jis')
+        result.set_output(res.get_data())
+
         result.save()
 
         #: page links
@@ -64,7 +66,7 @@ class Crawler(object):
                     res = self.br.submit()
                     case_result.status = res.code
                     case_result.content_type=res.info()['Content-Type']
-                    case_result.output = res.get_data().decode('shift_jis')
+                    case_result.set_output(res.get_data() )
                     case_result.save()
 
             self.br.open(url,timeout=2.0,)           #: access original page
