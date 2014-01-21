@@ -16,12 +16,18 @@ for model in get_models( get_app("pecker")) :
     admin.site.register(model,admin_class) 
 
 
+class LinkResultInline(admin.StackedInline):
+    model = LinkResult
+    extra = 0
 
 ### Link 
 class LinkAdmin(admin.ModelAdmin):
     list_display=tuple([f.name for f in Link._meta.fields ])
-    list_filter=('available',)
+    list_filter=('available','site',)
     search_fields = ['url',]
+    inlines =[
+        LinkResultInline,
+    ]
 admin.site.register(Link,LinkAdmin)
 
 ### LinkResult
