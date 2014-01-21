@@ -2,3 +2,4 @@
 *.egg-info
 *.sqlite3
 .*.swp
+*.gz

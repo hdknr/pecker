@@ -50,3 +50,14 @@ class Command(GenericCommand):
             forms = result.soup().select('form')
             if len(forms) > 0:
                 print result.link.url, len(forms)
+
+    def handle_list_exts(self,run,*args,**options):
+        run = Run.objects.get(name=run) 
+        
+        out={} 
+        for result in run.linkresult_set.all():
+            u = urlparse( result.link.url )
+            ext = os.path.splitext(u.path)[1] 
+            out[ext] = out.get(ext,0) + 1
+
+        print out

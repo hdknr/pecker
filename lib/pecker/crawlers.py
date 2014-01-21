@@ -71,12 +71,18 @@ class Crawler(object):
         self.br.clear_history()
         time.sleep(0.01 )        
         url = url or self.site.start_url
-        result = self.run.provide_result( url )      
+
+
+        result =None
         try:
+            result = self.run.provide_result( url )      
+            if result == None:
+                return 
             next_links = self.crawl( result,force=force)
         except:
-            result.errors = traceback.format_exc()
-            result.save()
+            if result:
+                result.errors = traceback.format_exc()
+                result.save()
             return
 
         if not follow:

@@ -12,12 +12,15 @@ from requests.packages import chardet
 from bs4 import BeautifulSoup as Soup
 from urlparse import urlparse,urljoin
 import os
+import re
+import ast
 
 class Site(models.Model):
     name= models.CharField( max_length=20,unique=True )
     host =  models.CharField( max_length=30, null=True,blank=True,)
     scheme =  models.CharField( max_length=5, default='https' )
     start_url = models.CharField( max_length=300,null=True,blank=True, )
+    ignore_regex=  models.TextField( null=True,blank=True,default=None ) 
 
     class Meta:
         verbose_name = _(u'Site') 
@@ -28,6 +31,25 @@ class Site(models.Model):
 
     def delete_all_links(self):
         self.link_set.all().delete()
+
+    def regexs(self):
+        ret = getattr(self,'_regex',None)
+        if ret != None:
+            return ret
+ 
+        if not self.ignore_regex:
+            return []
+        setattr(self,'_regex',[ re.compile( ast.literal_eval(restr),re.IGNORECASE) 
+                for restr in self.ignore_regex.split('\n') if restr])
+        return self._regex
+    
+    def ignore_url(self,url):
+
+        for r in self.regexs():
+            if r.search(url) :
+                return True
+
+        return False
 
 class Run(models.Model):
     site = models.ForeignKey(Site)
@@ -44,6 +66,9 @@ class Run(models.Model):
         link,link_created = Link.objects.get_or_create(
                             site = self.site,
                             url  = url )
+
+        if self.site.ignore_url(url):
+            return None
 
         result,result_created = LinkResult.objects.get_or_create(
                                     run = self,
