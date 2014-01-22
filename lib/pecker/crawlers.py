@@ -67,15 +67,15 @@ class Crawler(object):
 
         return next_links
 
-    def start(self,url=None,follow=True ,force=False):
+    def start(self,url=None,parent=None,follow=True ,force=False):
+        #: parent : parent Link instance
         self.br.clear_history()
         time.sleep(0.01 )        
         url = url or self.site.start_url
 
-
         result =None
         try:
-            result = self.run.provide_result( url )      
+            result = self.run.provide_result( url, parent )      
             if result == None:
                 return 
             next_links = self.crawl( result,force=force)
@@ -89,4 +89,4 @@ class Crawler(object):
             return 
 
         for path in next_links:
-            self.start(  path   )
+            self.start(  path ,result.link)

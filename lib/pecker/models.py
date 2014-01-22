@@ -62,10 +62,14 @@ class Run(models.Model):
     def __unicode__(self):
         return self.name
 
-    def provide_result(self,url):
+    def provide_result(self,url,parent=None):
         link,link_created = Link.objects.get_or_create(
                             site = self.site,
                             url  = url )
+
+        if parent:
+            link.parent = parent
+            link.save()
 
         if self.site.ignore_url(url):
             return None
@@ -80,6 +84,7 @@ class Run(models.Model):
 
 class Link(models.Model):
     site = models.ForeignKey(Site)
+    parent= models.ForeignKey('self',default=None,null=True,blank=True,on_delete=models.SET_NULL)
     url_hash = models.CharField( max_length=50,db_index=True,unique=True,blank=True )
     url = models.CharField( max_length=300,)
     available  = models.BooleanField( default=True ) 
