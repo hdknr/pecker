@@ -67,7 +67,7 @@ class Run(models.Model):
                             site = self.site,
                             url  = url )
 
-        if parent:
+        if link_created and parent:
             link.parent = parent
             link.save()
 
